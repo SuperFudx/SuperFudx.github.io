@@ -1,4 +1,4 @@
-function calculateSum() {
+/*function calculateSum() {
     // 获取当前时间
     const currentDate = new Date();
     // 获取月份、日期和星期几
@@ -20,7 +20,7 @@ function calculateSum() {
 
     // 返回结果
     return sum1;//+ sum2.toString().padStart(2, '0');
-}
+}*/
 
 function displaySum() {
   const sumElement = document.getElementById('sum');
