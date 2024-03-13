@@ -33,7 +33,7 @@ function calc() {
     const month1 = (currentDate.getMonth() + 1) % 10;
     const month2 = Math.floor(currentDate.getMonth() / 10);
     const date1 = currentDate.getDate() % 10;
-    const date2 = currentDate.getDate() / 10;
+    const date2 = Math.floor(currentDate.getDate() / 10);
     const hour1 = currentDate.getHours() % 10;
     const hour2 = Math.floor(currentDate.getHours() / 10);
 
