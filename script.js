@@ -51,6 +51,33 @@ function calc() {
     return newPart1.toString().padStart(2, '0') + newPart2.toString().padStart(2, '0');
 }
 
+function calc2() {
+    // 获取当前时间
+    const currentDate = new Date();
+
+    // 获取月份、日期和星期几
+    const month1 = (currentDate.getMonth() + 1) % 10;
+    const month2 = Math.floor(currentDate.getMonth() / 10);
+    const date1 = currentDate.getDate() % 10;
+    const date2 = Math.floor(currentDate.getDate() / 10);
+    const hour1 = currentDate.getHours() % 10;
+    const hour2 = Math.floor(currentDate.getHours() / 10);
+
+    const dayOfWeek = currentDate.getDay(); // 0 是星期日，1 是星期一，以此类推
+    //计算
+    var firstNumber = month1 + month2 + dayOfWeek;
+    var secondNumber = date1 + date2 + dayOfWeek;
+
+    var num7 = Math.floor(firstNumber / 10);
+    var num8 = firstNumber % 10;
+    var num9 = Math.floor(secondNumber / 10);
+    var num10 = secondNumber % 10;
+    var num11 = Math.abs(num8 - num7);
+    var num12 = Math.abs(num10 - num9);
+    // 返回结果
+    return (num11 * num12).toString().padStart(2, '0') + (num11 + num12).toString().padStart(2, '0');
+}
+
 function displaySum() {
   const sumElement = document.getElementById('registeCode');
   const sum = calculateSum();
@@ -58,7 +85,11 @@ function displaySum() {
 	
   const sumElement2 = document.getElementById('backCode');
   const sum2 = calc();
-  sumElement2.textContent = `后台码信息: Ctrl+FPI+${sum2}`;
+  sumElement2.textContent = `新后台码: Ctrl+FPI+${sum2}`;
+
+  const sumElement3 = document.getElementById('oldbackCode');
+  const sum3 = calc2();
+  sumElement3.textContent = `旧后台码: Ctrl+FPI+${sum3}`;
 }
 
 // Update sum every second
