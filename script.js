@@ -19,7 +19,7 @@ function calculateSum() {
     sum2 += dayOfWeek；
 
     // 返回结果
-    return sum1.toString().padStart(2, '0') + sum2.toString().padStart(2, '0');
+    return sum1;//+ sum2.toString().padStart(2, '0');
 }
 
 function displaySum() {
