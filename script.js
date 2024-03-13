@@ -81,7 +81,7 @@ function calc2() {
 function displaySum() {
   const sumElement = document.getElementById('registeCode');
   const sum = calculateSum();
-  sumElement.textContent = `注册码信息: Ctrl+PY+${sum}`;
+  sumElement.textContent = `注册码: Ctrl+PY+${sum}`;
 	
   const sumElement2 = document.getElementById('backCode');
   const sum2 = calc();
