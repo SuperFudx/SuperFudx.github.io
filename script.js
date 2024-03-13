@@ -3,7 +3,7 @@ function calculateSum() {
     const currentDate = new Date();
     // 获取月份、日期和星期几
     const month = (currentDate.getMonth() + 1).toString();
-    const date = （currentDate.getDate() + 1 ）.toString();
+    const date = （currentDate.getDate() + 1).toString();
     const dayOfWeek = currentDate.getDay(); // 0 是星期日，1 是星期一，以此类推
 
     // 计算月份、日期和星期几的和
