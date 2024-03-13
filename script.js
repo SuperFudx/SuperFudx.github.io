@@ -28,7 +28,7 @@ function calculateSum() {
 function displaySum() {
   const sumElement = document.getElementById('sum');
   const sum = calculateSum();
-  sumElement.textContent = `当日注册码: ${sum}`;
+  sumElement.textContent = `当日注册码: Ctrl+PY+${sum}`;
 }
 
 // Update sum every second
