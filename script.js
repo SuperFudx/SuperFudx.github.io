@@ -8,26 +8,27 @@ function calculateSum() {
     const dayOfWeek = currentDate.getDay(); // 0 是星期日，1 是星期一，以此类推
 
     // 计算月份、日期和星期几的和
-    let sum = 0;
-	let sum1 = 0;
+    let sum1 = 0;
+    let sum2 = 0;
+	
     for (let i = 0; i < month.length; i++) {
-        sum += parseInt(month[i]);
+        sum1 += parseInt(month[i]);
     }
 	
-	 for (let i = 0; i < date.length; i++) {
-        sum1 += parseInt(date[i]);
+    for (let i = 0; i < date.length; i++) {
+        sum2 += parseInt(date[i]);
     }
-   sum += dayOfWeek;
    sum1 += dayOfWeek;
+   sum2 += dayOfWeek;
 
     // 返回结果
-    return sum.toString().padStart(2, '0') + sum1.toString().padStart(2, '0');
+    return sum1.toString().padStart(2, '0') + sum2.toString().padStart(2, '0');
 }
 
 function displaySum() {
   const sumElement = document.getElementById('sum');
   const sum = calculateSum();
-  sumElement.textContent = `Sum of current time: ${sum}`;
+  sumElement.textContent = `当日注册码: ${sum}`;
 }
 
 // Update sum every second
