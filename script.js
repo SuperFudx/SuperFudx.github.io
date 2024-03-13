@@ -29,6 +29,10 @@ function displaySum() {
   const sumElement = document.getElementById('registeCode');
   const sum = calculateSum();
   sumElement.textContent = `当日注册码: Ctrl+PY+${sum}`;
+	
+  const sumElement2 = document.getElementById('registeCode');
+  //const sum = calculateSum();
+  sumElement2.textContent = `当日后台码: 暂未实现`;
 }
 
 // Update sum every second
