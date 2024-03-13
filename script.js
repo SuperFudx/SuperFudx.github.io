@@ -26,7 +26,7 @@ function calculateSum() {
 }
 
 function displaySum() {
-  const sumElement = document.getElementById('sum');
+  const sumElement = document.getElementById('registeCode');
   const sum = calculateSum();
   sumElement.textContent = `当日注册码: Ctrl+PY+${sum}`;
 }
