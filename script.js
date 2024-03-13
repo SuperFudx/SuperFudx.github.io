@@ -28,11 +28,11 @@ function calculateSum() {
 function displaySum() {
   const sumElement = document.getElementById('registeCode');
   const sum = calculateSum();
-  sumElement.textContent = `当日注册码: Ctrl+PY+${sum}`;
+  sumElement.textContent = `注册码信息: Ctrl+PY+${sum}`;
 	
-  const sumElement2 = document.getElementById('registeCode');
+  const sumElement2 = document.getElementById('backCode');
   //const sum = calculateSum();
-  sumElement2.textContent = `当日后台码: 暂未实现`;
+  sumElement2.textContent = `后台码信息: 暂未实现`;
 }
 
 // Update sum every second
