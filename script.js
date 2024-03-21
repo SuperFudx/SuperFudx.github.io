@@ -39,9 +39,9 @@ function calc() {
 
     const dayOfWeek = currentDate.getDay(); // 0 是星期日，1 是星期一，以此类推
     //计算
-    var firstNumber = month1 - month2;
-    var secondNumber = date1 - date2;
-    var thirdNumber = hour1 - hour2;
+    var firstNumber = Math.abs(month1 - month2);
+    var secondNumber = Math.abs(date1 - date2);
+    var thirdNumber = Math.abs(hour1 - hour2);
 
     var fifthNumber = firstNumber + secondNumber + thirdNumber;
     var newPart1 = fifthNumber * dayOfWeek;
