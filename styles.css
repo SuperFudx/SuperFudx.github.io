@@ -5,8 +5,12 @@ body {
 .container {
   max-width: 600px;
   margin: 0 auto;
-  text-align: left;
+  text-align: center;
   padding: 20px;
+}
+
+.align-left {
+  text-align: left;
 }
 
 h1 {
