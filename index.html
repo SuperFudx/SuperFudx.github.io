@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>质谱信息查询</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .search-area {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .search-area input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 60%;
+            margin-right: 10px;
+        }
+        .search-area button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .search-area button:hover {
+            background-color: #0056b3;
+        }
+        .result-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        .result-item {
+            margin-bottom: 10px;
+        }
+        .result-item h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>质谱信息查询系统</h1>
+
+    <div class="search-area">
+        <input type="text" id="searchInput" placeholder="请输入CSA或物质名称...">
+        <button onclick="searchData()">查询</button>
+    </div>
+
+    <div id="results" class="result-box">
+        <p>在这里显示查询结果...</p>
+    </div>
+</div>
+
+<script>
+    const DATA_FILE = 'mass_spec_data.txt';
+    let massSpecData = [];
+
+    window.onload = function() {
+        fetch(DATA_FILE)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('无法加载数据文件 ' + DATA_FILE);
+                }
+                return response.text();
+            })
+            .then(data => {
+                massSpecData = parseData(data);
+                console.log('数据加载成功，共计', massSpecData.length, '条记录。');
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = `<p class="error-message">加载数据时出错：${error.message}</p>`;
+                console.error('Error fetching data:', error);
+            });
+    };
+
+    function parseData(text) {
+        const lines = text.trim().split('\n\n');
+        return lines.map(record => {
+            const fields = {};
+            record.split('\n').forEach(line => {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    const key = parts[0].trim();
+                    const value = parts.slice(1).join(':').trim();
+                    fields[key] = value;
+                }
+            });
+            return fields;
+        });
+    }
+
+    function searchData() {
+        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '';
+
+        if (query === '') {
+            resultsDiv.innerHTML = '<p class="error-message">请输入查询内容。</p>';
+            return;
+        }
+
+        const foundItem = massSpecData.find(item => 
+            (item['CSA'] && item['CSA'].toLowerCase() === query) ||
+            (item['名称'] && item['名称'].toLowerCase() === query)
+        );
+
+        if (foundItem) {
+            displayResults(foundItem, resultsDiv);
+        } else {
+            resultsDiv.innerHTML = '<p class="error-message">未找到相关信息，请检查输入。</p>';
+        }
+    }
+
+    function displayResults(data, container) {
+        let html = '';
+        html += `<h3>${data['名称'] || '未命名'} (${data['CSA'] || '未知'})</h3>`;
+        
+        // 显示理化性质
+        html += `<h4>理化性质：</h4>`;
+        for (const key in data) {
+            if (!['质谱峰(mass)', '质谱峰(intensity)'].includes(key)) {
+                html += `<div class="result-item"><strong>${key}</strong>: ${data[key]}</div>`;
+            }
+        }
+
+        // 绘制质谱谱图
+        if (data['质谱峰(mass)'] && data['质谱峰(intensity)']) {
+            html += `<h4>质谱谱图：</h4>`;
+            html += `<div class="chart-container"><canvas id="massSpectrumChart"></canvas></div>`;
+        }
+
+        container.innerHTML = html;
+
+        if (data['质谱峰(mass)'] && data['质谱峰(intensity)']) {
+            drawMassSpectrum(data);
+        }
+    }
+
+    function drawMassSpectrum(data) {
+        const masses = data['质谱峰(mass)'].split(',').map(Number);
+        const intensities = data['质谱峰(intensity)'].split(',').map(Number);
+        const labels = masses.map(mass => mass.toFixed(2));
+
+        const ctx = document.getElementById('massSpectrumChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '相对强度',
+                    data: intensities,
+                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: '质荷比 (m/z)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '相对强度 (%)'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
