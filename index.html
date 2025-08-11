@@ -1,227 +1,186 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>质谱信息查询</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .search-area {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        .search-area input {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 60%;
-            margin-right: 10px;
-        }
-        .search-area button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .search-area button:hover {
-            background-color: #0056b3;
-        }
-        .result-box {
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 4px;
-            background-color: #fafafa;
-        }
-        .result-item {
-            margin-bottom: 10px;
-        }
-        .result-item h3 {
-            margin-top: 0;
-            color: #007bff;
-        }
-        .error-message {
-            color: red;
-            text-align: center;
-        }
-        .chart-container {
-            position: relative;
-            height: 400px;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CAS 查询与质谱图示例</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding:24px; background:#f7f8fb }
+    .card { background:white; border-radius:12px; box-shadow:0 6px 18px rgba(20,30,50,0.08); padding:20px; max-width:900px; margin:24px auto }
+    h1 { margin:0 0 12px 0; font-size:20px }
+    .controls { display:flex; gap:8px; margin-bottom:12px }
+    input[type="search"]{ flex:1; padding:10px 12px; border-radius:8px; border:1px solid #dfe6f0; font-size:14px }
+    button { padding:10px 14px; border-radius:8px; border:none; background:#2468f0; color:white; cursor:pointer }
+    .result { margin-top:12px; padding:12px; border-radius:8px; border:1px dashed #e3e8f5; background:#fcfeff }
+    .not-found { color:#d9534f }
+    table { border-collapse:collapse; width:100%; margin-top:8px }
+    th, td { text-align:left; padding:6px 8px; border-bottom:1px solid #f1f4fb }
+    .chart-wrap { margin-top:14px; }
+    canvas { max-width:100%; height:360px; }
+    small.hint { color:#6b7280 }
+  </style>
 </head>
 <body>
+  <div class="card">
+    <h1>本地 CAS 查询与质谱图</h1>
+    <p class="hint"><small>输入 CAS 号或物质名并查询。数据来自外部 <code>data.json</code> 文件。</small></p>
 
-<div class="container">
-    <h1>质谱信息查询系统</h1>
-
-    <div class="search-area">
-        <input type="text" id="searchInput" placeholder="请输入CSA或物质名称...">
-        <button onclick="searchData()">查询</button>
+    <div class="controls">
+      <input id="q" type="search" placeholder="输入 CAS 号 或 名称（例如 50-00-0 或 甲醛）" aria-label="查询 CAS" />
+      <button id="btn">查询</button>
+      <button id="btn-clear" style="background:#777;color:white">清空</button>
     </div>
 
-    <div id="results" class="result-box">
-        <p>在这里显示查询结果...</p>
+    <div id="out" class="result" aria-live="polite">
+      <small class="hint">等待查询…</small>
     </div>
-</div>
 
-<script>
-    const DATA_FILE = 'mass_spec_data.txt';
-    let massSpecData = [];
+    <div id="chartArea" class="chart-wrap" style="display:none">
+      <canvas id="spectrumChart" aria-label="质谱图" role="img"></canvas>
+    </div>
 
-    window.onload = function() {
-        fetch(DATA_FILE)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('无法加载数据文件 ' + DATA_FILE);
-                }
-                return response.text();
-            })
-            .then(data => {
-                massSpecData = parseData(data);
-                console.log('数据加载成功，共计', massSpecData.length, '条记录。');
-            })
-            .catch(error => {
-                document.getElementById('results').innerHTML = `<p class="error-message">加载数据时出错：${error.message}</p>`;
-                console.error('Error fetching data:', error);
-            });
-    };
+  </div>
 
-    function parseData(text) {
-        const lines = text.trim().split('\n\n');
-        return lines.map(record => {
-            const fields = {};
-            record.split('\n').forEach(line => {
-                const parts = line.split(':');
-                if (parts.length >= 2) {
-                    const key = parts[0].trim();
-                    const value = parts.slice(1).join(':').trim();
-                    fields[key] = value;
-                }
-            });
-            return fields;
-        });
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js datalabels 插件 -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+  <script>
+    let localData = []; // 从 data.json 加载的数据
+    const qEl = document.getElementById('q');
+    const out = document.getElementById('out');
+    const btn = document.getElementById('btn');
+    const btnClear = document.getElementById('btn-clear');
+    const chartArea = document.getElementById('chartArea');
+    const ctx = document.getElementById('spectrumChart').getContext('2d');
+    let chart = null;
+
+    // 加载外部 JSON 数据
+    fetch('data.json')
+      .then(res => {
+        if(!res.ok) throw new Error(res.statusText);
+        return res.json();
+      })
+      .then(data => {
+        localData = data;
+        out.innerHTML = '<small class="hint">数据已加载，可以开始查询。</small>';
+      })
+      .catch(err => {
+        console.error("加载数据失败:", err);
+        out.innerHTML = '<span style="color:red;">数据加载失败，请检查 data.json 文件。</span>';
+      });
+
+    function normalize(s){ return String(s || '').trim().toLowerCase(); }
+    function escapeHtml(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    function renderNotFound(input){
+      chartArea.style.display = 'none';
+      out.innerHTML = `<div class="not-found">未找到物质：<strong>${escapeHtml(input)}</strong></div>`;
     }
 
-    function searchData() {
-        const query = document.getElementById('searchInput').value.trim().toLowerCase();
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = '';
-
-        if (query === '') {
-            resultsDiv.innerHTML = '<p class="error-message">请输入查询内容。</p>';
-            return;
-        }
-
-        const foundItem = massSpecData.find(item => 
-            (item['CSA'] && item['CSA'].toLowerCase() === query) ||
-            (item['名称'] && item['名称'].toLowerCase() === query)
-        );
-
-        if (foundItem) {
-            displayResults(foundItem, resultsDiv);
+    function renderResults(items){
+      if(!items || items.length === 0){
+        out.innerHTML = '<small class="hint">无匹配结果。</small>';
+        chartArea.style.display='none';
+        return;
+      }
+      if(items.length === 1){
+        const it = items[0];
+        out.innerHTML = `
+          <div><strong>${escapeHtml(it.name)} · ${escapeHtml(it.cas)}</strong></div>
+          <table>
+            <tr><th>CAS</th><td>${escapeHtml(it.cas)}</td></tr>
+            <tr><th>名称</th><td>${escapeHtml(it.name)}</td></tr>
+            <tr><th>分子式</th><td>${escapeHtml(it.formula || '-')}</td></tr>
+            <tr><th>相对分子质量</th><td>${escapeHtml(it.mw || '-')}</td></tr>
+            <tr><th>描述</th><td>${escapeHtml(it.desc || '-')}</td></tr>
+          </table>`;
+        if(Array.isArray(it.spectrum) && it.spectrum.length){
+          drawSpectrum(it.spectrum, `${it.name} (${it.cas})`);
         } else {
-            resultsDiv.innerHTML = '<p class="error-message">未找到相关信息，请检查输入。</p>';
+          chartArea.style.display = 'none';
         }
+        return;
+      }
+      chartArea.style.display = 'none';
+      out.innerHTML = `<div>共找到 ${items.length} 条匹配：</div>` +
+        `<table><thead><tr><th>CAS</th><th>名称</th><th>分子式</th></tr></thead><tbody>` +
+        items.map(i => `<tr><td>${escapeHtml(i.cas)}</td><td>${escapeHtml(i.name)}</td><td>${escapeHtml(i.formula || '-')}</td></tr>`).join('') +
+        `</tbody></table>`;
     }
 
-    function displayResults(data, container) {
-        let html = '';
-        html += `<h3>${data['名称'] || '未命名'} (${data['CSA'] || '未知'})</h3>`;
-        
-        // 显示理化性质
-        html += `<h4>理化性质：</h4>`;
-        for (const key in data) {
-            if (!['质谱峰(mass)', '质谱峰(intensity)'].includes(key)) {
-                html += `<div class="result-item"><strong>${key}</strong>: ${data[key]}</div>`;
-            }
-        }
-
-        // 绘制质谱谱图
-        if (data['质谱峰(mass)'] && data['质谱峰(intensity)']) {
-            html += `<h4>质谱谱图：</h4>`;
-            html += `<div class="chart-container"><canvas id="massSpectrumChart"></canvas></div>`;
-        }
-
-        container.innerHTML = html;
-
-        if (data['质谱峰(mass)'] && data['质谱峰(intensity)']) {
-            drawMassSpectrum(data);
-        }
+    function search(input){
+      const t = normalize(input);
+      if(!t){
+        out.innerHTML = '<small class="hint">请输入查询内容（CAS 或名称）。</small>';
+        chartArea.style.display='none';
+        return;
+      }
+      const exact = localData.filter(d => normalize(d.cas) === t);
+      if(exact.length){ renderResults(exact); return; }
+      const exactName = localData.filter(d => normalize(d.name) === t);
+      if(exactName.length){ renderResults(exactName); return; }
+      const fuzzy = localData.filter(d => normalize(d.cas).includes(t) || normalize(d.name).includes(t));
+      if(fuzzy.length){ renderResults(fuzzy); return; }
+      renderNotFound(input);
     }
 
-    function drawMassSpectrum(data) {
-    const masses = data['质谱峰(mass)'].split(',').map(Number);
-    const intensities = data['质谱峰(intensity)'].split(',').map(Number);
-    const labels = masses.map(mass => mass.toFixed(2));
+    function drawSpectrum(spectrum, title){
+      const s = spectrum.slice().sort((a,b)=> a.mz - b.mz);
+      const labels = s.map(p => String(p.mz));
+      const data = s.map(p => Number(p.intensity) || 0);
 
-    const ctx = document.getElementById('massSpectrumChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',  // 改为线图
+      chartArea.style.display = '';
+
+      const cfg = {
+        type: 'bar',
         data: {
-            labels: labels,
-            datasets: [{
-                label: '相对强度',
-                data: intensities,
-                backgroundColor: 'rgba(0, 123, 255, 0.5)',
-                borderColor: 'rgba(0, 123, 255, 1)',
-                borderWidth: 1,
-                pointRadius: 0,  // 隐藏点
-                showLine: false  // 隐藏连线
-            }]
+          labels: labels,
+          datasets: [{
+            label: '强度',
+            data: data,
+            backgroundColor: 'black',
+            borderColor: 'black',
+            borderWidth: 2,
+            barPercentage: 0.01,
+            categoryPercentage: 1.0
+          }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: '质荷比 (m/z)'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: '相对强度 (%)'
-                    },
-                    beginAtZero: true
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            elements: {
-                line: {
-                    tension: 0  // 禁用曲线
-                }
+          plugins: {
+            title: { display: true, text: title },
+            tooltip: { mode: 'index', intersect: false },
+            datalabels: {
+              anchor: 'end',
+              align: 'end',
+              color: 'black',
+              font: { size: 10 },
+              formatter: (value, ctx) => ctx.chart.data.labels[ctx.dataIndex]
             }
-        }
+          },
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'm/z (质量数)' }, ticks: { autoSkip: false } },
+            y: { title: { display: true, text: '相对强度' }, beginAtZero: true }
+          }
+        },
+        plugins: [ChartDataLabels]
+      };
+
+      if(chart){ chart.destroy(); chart = null; }
+      chart = new Chart(ctx, cfg);
+    }
+
+    btn.addEventListener('click', () => search(qEl.value));
+    btnClear.addEventListener('click', ()=>{
+      qEl.value='';
+      out.innerHTML = '<small class="hint">已清空，等待查询…</small>';
+      chartArea.style.display='none';
+      qEl.focus();
     });
-}
-</script>
+    qEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') search(qEl.value); });
 
+  </script>
 </body>
-
 </html>
