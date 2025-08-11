@@ -170,50 +170,58 @@
     }
 
     function drawMassSpectrum(data) {
-        const masses = data['质谱峰(mass)'].split(',').map(Number);
-        const intensities = data['质谱峰(intensity)'].split(',').map(Number);
-        const labels = masses.map(mass => mass.toFixed(2));
+    const masses = data['质谱峰(mass)'].split(',').map(Number);
+    const intensities = data['质谱峰(intensity)'].split(',').map(Number);
+    const labels = masses.map(mass => mass.toFixed(2));
 
-        const ctx = document.getElementById('massSpectrumChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: '相对强度',
-                    data: intensities,
-                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
-                    borderColor: 'rgba(0, 123, 255, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: '质荷比 (m/z)'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: '相对强度 (%)'
-                        },
-                        beginAtZero: true
+    const ctx = document.getElementById('massSpectrumChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',  // 改为线图
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '相对强度',
+                data: intensities,
+                backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                borderColor: 'rgba(0, 123, 255, 1)',
+                borderWidth: 1,
+                pointRadius: 0,  // 隐藏点
+                showLine: false  // 隐藏连线
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: '质荷比 (m/z)'
                     }
                 },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+                y: {
+                    title: {
+                        display: true,
+                        text: '相对强度 (%)'
+                    },
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            elements: {
+                line: {
+                    tension: 0  // 禁用曲线
                 }
             }
-        });
-    }
+        }
+    });
+}
 </script>
 
 </body>
+
 </html>
